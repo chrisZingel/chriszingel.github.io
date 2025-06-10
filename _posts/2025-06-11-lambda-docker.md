@@ -9,6 +9,7 @@ tags:
 ---
 <img src="{{ '/assets/images/2025-06-11-lambda-docker/test.png' | relative_url }}" alt="Some description" itemprop="image"  class="u-photo">
 
+a test
 A notice displays information that explains nearby content. Often used to call attention to a particular detail.
 
 When using Kramdown `{: .notice}` can be added after a sentence to assign the `.notice` to the `<p></p>` element. 
