@@ -6,10 +6,7 @@ search: false
 @charset "utf-8";
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
 @import "minimal-mistakes"; // main partials
-body {
-  font-family: 'Inter', sans-serif;
-}
 
-h1, h2 {
-  font-family: 'Merriweather', serif;
+div.smaller , .archive__item-excerpt  p {
+  font-size: 0.75em; line-height: 1.5;
 }

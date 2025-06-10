@@ -1,11 +1,13 @@
 ---
-title: "Post: Notice"
+title: "Lambda development using Docker"
 categories:
   - Blog
 tags:
-  - Post Formats
-  - notice
+  - AWS
+  - Lambda
+  - Docker
 ---
+<img src="{{ '/assets/images/2025-06-11-lambda-docker/test.png' | relative_url }}" alt="Some description" itemprop="image"  class="u-photo">
 
 A notice displays information that explains nearby content. Often used to call attention to a particular detail.
 
@@ -66,3 +68,4 @@ Or you could skip the capture and stick with straight HTML.
   <h4>Message</h4>
   <p>A basic message.</p>
 </div>
+
