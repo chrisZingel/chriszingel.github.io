@@ -1,4 +1,4 @@
----
+ ---
 title: "Lambda development using Docker and Visual Studio Code "
 categories:
   - Blog
@@ -8,17 +8,21 @@ tags:
   - Docker
 ---
 
-Recently, I discovered how easy it is to use VS Code with Docker, and I've started using it when developing AWS Lambda code. Having a local environment that closely mirrors the Lambda runtime in the cloud has eliminated many of the classic "it works on my machine" errors—where code runs fine locally but frustratingly fails when deployed. Debugging code on AWS is a frustrating experience due to the repetitive cycle of adding print statements, redeploying, and checking logs to isolate where and why an error is occurring in a Lambda function.
+Recently, I discovered how easy it is to use Visual Studio Code with Docker, and I've started using it when developing AWS Lambda. Having a local environment that matches Lambda's runtime in the cloud has eliminated for me "it works on my machine" errors—where code runs fine locally but frustratingly fails when deployed. 
 
-This post walks through how I use VS Code and Docker to develop Lambda functions locally, regardless of the deployment method used for the code.
+Debugging lambda code is a frustrating experience due to the repetitive cycle of adding print statements, redeploying then switching to the logs in the hope of isolating where and why an error is occurring.
+
+
+This post walks through how I use Visual Studio Code and Docker as my development environment with the option to deploy that Docker image to Lambda.
 {: .notice--info}
 
-## Setup Visual Studio code for Docker
-Installed [VSCode](https://code.visualstudio.com/download), [AWS CLi](https://formulae.brew.sh/formula/awscli) and the VSCode extension `Dev Containers`. The `Dev Containers' extension allows you to use a Docker container as your development environment.  You’ll also need to have [Docker](https://formulae.brew.sh/formula/docker) installed on your machine, along with [Docker Deskstop](https://docs.docker.com/desktop/setup/install/mac-install/), which provides a graphical interface to interact with Docker resources.
+## Code Setup 
+First up install [VSCode](https://code.visualstudio.com/download), [AWS CLi](https://formulae.brew.sh/formula/awscli) and Visual Studio code. The extension  `Dev Containers` also needs to be installed which allows you to use a Docker container as your development environment.  You’ll also need to have installed [Docker](https://formulae.brew.sh/formula/docker) and [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/). This provides the docker server, and a visual way to interact with Docker resources.
 
 
-### Docker Image Setup
-The Docker image needs to match the Lambda runtime environment as closely as possible. Details of the base image can be found on their [offical Docker image ](https://gallery.ecr.aws/lambda/python) page, and instructions to [create a Docker image] (https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions) is available here. 
+### Dockerfile
+The Docker image needs to match the Lambda runtime environment as closely as possible. The [official Docker image ](https://gallery.ecr.aws/lambda/python) page provides details, along as a code[ sample](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions). I also copy over the src folder, containing my custom code, and the handler function, which the Lambda process uses to initiate the Lambda process.
+ 
 
 **Dockerfile**
 ```bash
@@ -46,51 +50,44 @@ CMD [ "lambda_function.handler" ]
 Since our project is written in Python, use the official AWS Python base image as the foundation image for your Docker image
 {: .notice--info}
 
-When VS Code creates a development container, it uses the Docker image specified in your project's Dockerfile as the base, then layers on additional functionality to support VS Code. This configuration is defined in the devcontainer.json file, which we’ll add shortly. The tar and zip packages are included because VS Code's Docker setup builds on top of this image and requires them during its build process. I copy over the src folder, containig my custom code, and finally the handler function, which the Lambda process uses to initiate the Lambda process.
+### Visual Studio Dev Container setup
+When Visual Studio Code creates a development container, it uses the Docker image specified in your project's Dockerfile as the base, then layers on additional functionality to allow Visual Studio to run in a Docker container. This configuration is defined in the `devcontainer.json` file, which we’ll add shortly. The TAR and ZIP packages are included because Visual Studio Code builds on top of this image and requires them during its build process. 
 
+The final step is to add Visual Studio Code's `devcontainer.json` file to your project. This file configures the development container to use your Docker image—specified in the Dockerfile—as its base.
 
-The final step is to add VSCode's `devcontainer.json` file to your project. This file configures the development container to use your Docker image—specified in the Dockerfile—as its base.
-
-This file is auto-generated by clicking the icon in the bottom-left corner of VSCode (see image below), then selecting `Open Container Configuration File.` Next, click through the options, making sure to select `Add the configuration to your workspace` and confirm that it is based on your project’s Dockerfile. Your file should appear as shown below, under the **.devcontainer** directory
+This file is auto-generated by clicking the icon in the bottom-left corner of Visual Studio Code (see image below), then selecting `Open Container Configuration File.` Next, click through the options, making sure to select `Add the configuration to your workspace` and confirm that it is based on your project’s Dockerfile. Your file should appear as shown below, under the **.devcontainer** directory
 {: .notice--success}
-
 <img src="{{ '/assets/images/2025-06-11-lambda-docker/vscode_devcontainer2.png' | relative_url }}" alt="Amazon elastic container registry" itemprop="image"  class="u-photo">
 
-
+ ### Example Project
+My example code is a Lambda function that sends me an email with any file that is added to an S3 bucket.
 
 ### AWS Configuration file
-Once I’ve finalized the core functionality during development, I use AWS CDK to define and provision the required infrastructure. At this stage, I focus on security best practices by assigning the Lambda function only the minimal set of permissions it needs to run. Since I already know the code works, the emphasis shifts to infrastructure and permissions — and CDK makes it straightforward to define, add, or modify AWS resources and policies.
+To get started, you’ll need to create an IAM user with policy permissions for S3, SES, EC2 Container Registry (ECR), and CloudFormation, at a minimum. Then, create access keys for this user so you can make programmatic calls using those keys for authentication.
 
-To get started, you’ll need to create an IAM user with access to S3, SES, EC2 Container Registry (ECR), and CloudFormation, at a minimum. To allow your Visual Studio Code development environment to authenticate as this user, you'll need to configure AWS CLI locally using access keys [^2]. These credentials are stored in `~/.aws/credentials`.
-
-To make these credentials available inside your development container, add the following mount configuration to your devcontainer.json:
+To connect to AWS from your computer, run `aws configure` and enter the access keys you created. This will generate the `~/.aws/credentials` file.
+However, the Visual Studio Code container does not have access to this file by default. To make it available inside the container, you’ll need to add a volume that links the credentials file into the container. This can be configured using `devcontainer.json`.
 
 <img src="{{ '/assets/images/2025-06-11-lambda-docker/devcontainer_with_mount.png' | relative_url }}" alt="Dev container with mount code" itemprop="image" class="u-photo">
 
-This mounts your local ~/.aws directory into the container’s /root/.aws directory. As a result, any AWS SDK calls made from within the container — such as using boto3.client in Python — will automatically use your local credentials. This avoids hardcoding access keys or setting environment variables manually.
+This mounts your local `~/.aws/credentials` directory into the container’s `~/.aws/credentials` directory. As a result, any AWS SDK calls made from within the container — such as using boto3.client in Python — will automatically use your local credentials. This approach avoids the need to hardcode access keys or manually set environment variables.
 
-At this point, you should be able to open VS Code and attach to the development container. This gives you a consistent environment that mirrors AWS Lambda’s OS and default package set.
+At this point, you should be able to open Visual Studio Code, which will automatically prompt you to attach to the container. This container's environment will closely mirror the AWS Lambda operating system, including any installed packages.
 
 ### Deploying to AWS Lambda
-When you're ready to deploy your function to the cloud, you have a few options:
 
-1. Zip Archive — Package your code and dependencies into a .zip file and upload via the AWS Lambda Console.
-2. Inline Code — Edit and run your Lambda function directly in the AWS Console (best for very small or quick functions).
-3. Container Image — Package your Lambda function and its dependencies as a Docker image and deploy via Amazon ECR.
-
-For functions with many dependencies, I typically choose to deploy as a Docker image. While container-based Lambdas have a slightly longer cold start time, I find the tradeoff worth it — they're easier to manage, debug, and keep consistent with your local development environment.
+When you're ready to deploy your function to the cloud, you have a few options. For simple functions, you can use the Inline Code method. For functions with many dependencies, I typically prefer deploying as a Docker image. While container-based Lambdas may have slightly longer cold start times, I find the tradeoff worthwhile — they're easier to manage, debug, and keep consistent with your local development environment.However, if the Lambda function is invoked frequently, I would use the Zip Archive method, since every second counts.
 
 # Docker install
-
-To upload this on AWS, go to Amazon Elastic Container Registery and create repository. Here you will be able to select detailed instruction to upload the image to the registry
+To upload this on AWS, go to Amazon Elastic Container Registry and `create repository`. Here you will be able to select detailed instruction to upload the image to the registry
 
 <img src="{{ '/assets/images/2025-06-11-lambda-docker/amazon_elastic_container_registry.png' | relative_url }}" alt="Amazon elastic container registry" itemprop="image"  class="u-photo">
 
 When creating a container repository in AWS (e.g., Amazon ECR), you can choose between mutable and immutable image tags. The key difference is whether a tag can be changed once it’s attached to an image.
 
-In a mutable repository, if you push a new image using a tag that already exists, the new image replaces the tag. The previous image is untagged, but it still remains in the repository. If you want to avoid paying for storage of unused or outdated images, you can configure a lifecycle policy to automatically clean them up.
+In a mutable repository, if you push a new image using a tag that already exists, the new image replaces the tag. The previous image is untagged, but the image still remains in the repository. If you want to avoid paying for storage of unused or outdated images, you can configure a lifecycle policy to automatically clean them up.
 
-Of course, this depends on your specific needs—but I like to keep the option to quickly roll back to a recent version. So, I retain the latest previous image (i.e., the one that was most recently replaced). I’ve set this up using CDK code.
+Of course, this depends on your specific needs—but I like to keep the option to quickly roll back to the most recent version. So, I retain the latest previous image (i.e., the one that was most recently replaced).
 
 ```json
 ECR Console → Repositories → Your Repo → Lifecycle policies
@@ -108,21 +105,16 @@ ECR Console → Repositories → Your Repo → Lifecycle policies
 }
 ```
 
-
-### CDK Define and configure permissions
-Once the code runs successfully on AWS Lambda, I use AWS CDK to provision the necessary resources and permissions. CDK translates familiar Python code into a CloudFormation stack, making it easy to manage and modify infrastructure as code—especially when adjusting IAM permissions.
-
-When your project is under version control, CDK changes become part of the audit trail, providing clear visibility into who made what changes and when.
-
-I’ve provided the code below that sets up an Elastic Container Registry (ECR) as mutable, adds a lifecycle policy, and configures an S3 bucket along with a Lambda function that’s configured to use the container image from ECR. The Lambda function simply emails me any files that get added to the bucket. It’s a surprisingly useful way to report on incoming files—especially when you want a quick way to send them to yourself.
-
-
+Once I successfully deployed the app on AWS Lambda, I automated the AWS infrastructure using AWS CDK. This allows me to define and provision the required resources in code. At this stage, I focused on security best practices by assigning the Lambda function only the minimal set of permissions it needs to run. Since I already knew the code worked, I can just focus on resource creation and permissions with CDK.
+One key benefit of defining your stack in code — especially when under version control — is that it provides an audit trail of who made what changes.
+My CDK code sets up an Elastic Container Registry (ECR) as mutable, adds a lifecycle policy, and configures an S3 bucket with its own lifecycle rules. It also defines a Lambda function that uses the container image from ECR.
+The Lambda function simply emails me any files that are added to the S3 bucket.
 
 ## Code
 The code can be found here:
-[github reposititory](https://github.com/chrisZingel/blog_post_Lambda_development_using_Docker_and_VSCODE)
+[github reposittory](https://github.com/chrisZingel/blog_post_Lambda_development_using_Docker_and_VSCODE)
 
 
-
-[^1]: You need to manually setup this SES to email from and to emails. Here is a link to put you on that track https://semplates.io/blog/aws-ses-setup-guide-in-2024
+[^1]: You need to manually set up this SES to email from and to emails. Here is a link to put you on that track https://semplates.io/blog/aws-ses-setup-guide-in-2024
 [^2]: You need to setup a IAM and download the credentials 
+
