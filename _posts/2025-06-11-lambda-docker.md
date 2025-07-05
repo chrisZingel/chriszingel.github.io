@@ -1,4 +1,4 @@
- ---
+---
 title: "Lambda development using Docker and Visual Studio Code "
 categories:
   - Blog
@@ -106,14 +106,15 @@ ECR Console → Repositories → Your Repo → Lifecycle policies
 ```
 
 Once I successfully deployed the app on AWS Lambda, I automated the AWS infrastructure using AWS CDK. This allows me to define and provision the required resources in code. At this stage, I focused on security best practices by assigning the Lambda function only the minimal set of permissions it needs to run. Since I already knew the code worked, I can just focus on resource creation and permissions with CDK.
+
 One key benefit of defining your stack in code — especially when under version control — is that it provides an audit trail of who made what changes.
+
 My CDK code sets up an Elastic Container Registry (ECR) as mutable, adds a lifecycle policy, and configures an S3 bucket with its own lifecycle rules. It also defines a Lambda function that uses the container image from ECR.
 The Lambda function simply emails me any files that are added to the S3 bucket.
 
 ## Code
 The code can be found here:
 [github reposittory](https://github.com/chrisZingel/blog_post_Lambda_development_using_Docker_and_VSCODE)
-
 
 [^1]: You need to manually set up this SES to email from and to emails. Here is a link to put you on that track https://semplates.io/blog/aws-ses-setup-guide-in-2024
 [^2]: You need to setup a IAM and download the credentials 
