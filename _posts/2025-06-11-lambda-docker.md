@@ -10,6 +10,8 @@ tags:
 
 Recently, I discovered how easy it is to use Visual Studio Code with Docker, and I've started using it when developing AWS Lambda. Having a local environment that matches Lambda's runtime in the cloud has eliminated mine "it works on my machine" errors—where code runs fine locally but frustratingly fails when deployed.
 
+Showing steve around
+
 Debugging Lambda code on AWS sucks! It’s frustrating to go through the laborious cycle of adding print statements, uploading the changes, re-running the function, then switching to the logs in hopes of isolating where and why an error is occurring — all while muttering, “Why isn’t it working?”
 
 This setup will avoid a number of issues, though to be fair, there are always gotchas. I outline how I go about setting up Visual Studio Code and Docker as my development environment, which sets you up nicely if you want to deploy your code as a Docker image  or run your tests in a Docker container as part of a continuous integration workflow.
