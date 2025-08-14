@@ -8,7 +8,8 @@ tags:
   - Docker
 ---
 
-Recently, I discovered how easy it is to use Visual Studio Code with Docker, and I've started using it when developing AWS Lambda. Having a local environment that matches Lambda's runtime in the cloud has eliminated my "it works on my machine" errors—where code runs fine locally but frustratingly fails when deployed.
+Recently, I discovered how easy it is to use Visual Studio Code with Docker, and I've started using it when developing AWS Lambda. Having a local environment that matches Lambda's runtime in the cloud has eliminated mine "it works on my machine" errors—where code runs fine locally but frustratingly fails when deployed.
+
 
 Debugging Lambda code on AWS sucks! It’s frustrating to go through the laborious cycle of adding print statements, uploading the changes, re-running the function, then switching to the logs in hopes of isolating where and why an error is occurring — all while muttering, “Why isn’t it working?”
 
